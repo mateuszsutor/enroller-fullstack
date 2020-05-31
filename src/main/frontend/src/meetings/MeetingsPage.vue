@@ -31,9 +31,14 @@
         },
         methods: {
             addNewMeeting(meeting) {
-                this.meetings.push(meeting);
+                this.$http.post('meetings', meeting)
+                    .then( response => {
+                        this.meetings.push(response);
+                    })
+                    .catch(response => this.failure('Błąd podczas dodawania spotkania. Kod odpowiedzi: ' + response.status))
             },
             addMeetingParticipant(meeting) {
+
                 meeting.participants.push(this.username);
             },
             removeMeetingParticipant(meeting) {
@@ -42,6 +47,13 @@
             deleteMeeting(meeting) {
                 this.meetings.splice(this.meetings.indexOf(meeting), 1);
             }
+        },
+        mounted() {
+            this.$http.get('meetings')
+                .then(response => {
+                    this.meetings.push(...response.body);
+                })
+                .catch(response => alert('Nie udało się pobrać listy spotkań. Kod odpowiedzi: ' + response.status));
         }
     }
 </script>
