@@ -102,24 +102,25 @@ public class MeetingRestController {
         return new ResponseEntity(foundMeeting, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{id}/participants", method = RequestMethod.PUT)
-    public ResponseEntity<?> removeParticipantFromMeeting(
-            @PathVariable("id") long id,
-            @RequestBody Participant participantToRemove) {
-
-        Participant participant = participantService.findByLogin(participantToRemove.getLogin());
-        Collection<Participant> participants = meetingService.getEnrolled(id);
-
-        if (participant == null) {
-            return new ResponseEntity("A participant with login " + participantToRemove.getLogin()
-                    + " does not exist.", HttpStatus.NOT_FOUND);
-
-        } else if (!participants.contains(participant)) {
-            return new ResponseEntity("A participant with login " + participantToRemove.getLogin()
-                    + " was not register for this meeting", HttpStatus.NOT_FOUND);
-        } else {
-            meetingService.deleteParticipantToMeeting(id, participant);
-            return new ResponseEntity<Collection<Participant>>(participants, HttpStatus.OK);
+    @RequestMapping(value = "/{meetingId}/participants/{participantId}", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteParticipantFromMeeting(@PathVariable("meetingId") long meetingId, @PathVariable("participantId") String participantId) {
+        Meeting meeting = meetingService.findByIdMeeting(meetingId);
+        if (meeting == null) {
+            return new ResponseEntity<String>("A meeting with id: " + meetingId + " doesn't exist.", HttpStatus.NOT_FOUND);
         }
+
+        Participant existingParticipant = participantService.findByLogin(participantId);
+        if (existingParticipant == null) {
+            return new ResponseEntity<String>("A participant doesn't exist.", HttpStatus.NOT_FOUND);
+        }
+
+        if (!meeting.getParticipants().contains(existingParticipant)) {
+            return new ResponseEntity<String>("Participant isn't added to meeting with id" + meeting.getId(), HttpStatus.CONFLICT);
+        }
+
+        meeting.removeParticipant(existingParticipant);
+
+        meetingService.update(meeting);
+        return new ResponseEntity<Participant>(existingParticipant, HttpStatus.OK);
     }
 }

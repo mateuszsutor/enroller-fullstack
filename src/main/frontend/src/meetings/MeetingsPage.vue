@@ -20,7 +20,6 @@
 <script>
     import NewMeetingForm from "./NewMeetingForm";
     import MeetingsList from "./MeetingsList";
-
     export default {
         components: {NewMeetingForm, MeetingsList},
         props: ['username'],
@@ -35,27 +34,32 @@
                     .then(response => {
                         this.meetings.push(response.body);
                     })
-                    .catch(response => this.failure('Błąd podczas dodawania spotkania. Kod odpowiedzi: ' + response.status))
+                    .catch(response => alert('Nie udało się dodać spotkania. Kod odpowiedzi: ' + response.status));
             },
             addMeetingParticipant(meeting) {
-
-                meeting.participants.push(this.username);
+                const participant = {};
+                participant.login = this.username;
+                this.$http.post('meetings/' + meeting.id + '/participants', participant)
+                    .then(response => meeting.participants.push(participant))
+                    .catch(response => alert('Nie udało sie zapisać na spotkanie. Kod odpowiedzi: ' + response.status));
             },
             removeMeetingParticipant(meeting) {
-                meeting.participants.splice(meeting.participants.indexOf(this.username), 1);
+                this.$http.delete('meetings/' + meeting.id + '/participants/' + this.username)
+                    .then(response =>meeting.participants.splice(meeting.participants.indexOf(this.username), 1))
+                    .catch(response => alert('Nie udało się usunąć uczestnika ze spotkania. Kod odpowiedzi: ' + response.status));
             },
             deleteMeeting(meeting) {
                 this.$http.delete('meetings/' + meeting.id)
                     .then(response => {
                         this.meetings.splice(this.meetings.indexOf(meeting), 1);
                     })
-                    .catch(response => this.failure('Błąd podczas usuwania spotkania. Kod odpowiedzi: ' + response.status))
+                    .catch(response => alert('Nie udało się usunąć spotkania. Kod odpowiedzi: ' + response.status));
             }
         },
         mounted() {
             this.$http.get('meetings')
                 .then(response => {
-                    this.meetings.push(...response.body);
+                    this.meetings = response.body;
                 })
                 .catch(response => alert('Nie udało się pobrać listy spotkań. Kod odpowiedzi: ' + response.status));
         }
